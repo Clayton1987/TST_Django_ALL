@@ -1,10 +1,15 @@
 from django.shortcuts import render
 from .forms import ContatoForm, ProdutoModelForm
 from django.contrib import messages
+from .models import Produto
+from django.shortcuts import redirect
 
 # Create your views here.
 def index(request):
-    return render(request, 'index.html')
+    context = {
+        'produtos': Produto.objects.all()
+    }
+    return render(request, 'index.html', context)
 
 def contato(request):
     form = ContatoForm(request.POST or None)
@@ -36,27 +41,31 @@ def contato(request):
     return render(request, 'contato.html', context)
 
 def produto(request):
-    if str(request.method) == 'POST':
-        form = ProdutoModelForm(request.POST, request.FILES)
-        if form.is_valid():
-            #prod = form.save(commit=False)
-            # print(f'Nome: {prod.nome}')
-            # print(f'Descrição: {prod.descricao}')
-            # print(f'Estoque: {prod.estoque}')
-            # print(f'Preço: {prod.preco}')
-            # print(f'Imagem: {prod.imagem}')
-            
-            form.save()
-            messages.success(request, 'Produto salvo com Sucesso.')
-            form = ProdutoModelForm()
+    print(f'Usuario: {request.user}')
+    if str(request.user) != "AnonymousUser":
+        if str(request.method) == 'POST':
+            form = ProdutoModelForm(request.POST, request.FILES)
+            if form.is_valid():
+                #prod = form.save(commit=False)
+                # print(f'Nome: {prod.nome}')
+                # print(f'Descrição: {prod.descricao}')
+                # print(f'Estoque: {prod.estoque}')
+                # print(f'Preço: {prod.preco}')
+                # print(f'Imagem: {prod.imagem}')
+
+                form.save()
+                messages.success(request, 'Produto salvo com Sucesso.')
+                form = ProdutoModelForm()
+            else:
+                messages.error(request, 'Erro ao salvar produto')
+
         else:
-            messages.error(request, 'Erro ao salvar produto')
+            form = ProdutoModelForm()
 
+        context = {
+            'form': form
+            }
+
+        return render(request, 'produto.html', context)
     else:
-        form = ProdutoModelForm()
-
-    context = {
-        'form': form
-        }
-
-    return render(request, 'produto.html', context)
+        return redirect('index')
